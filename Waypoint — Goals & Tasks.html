@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Waypoint — Goals & Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAFAF8; --panel:#FFFFFF; --line:#E7E5E0;
+  --ink:#1B1B18; --text-dim:#75726A; --muted:#A6A399;
+  --accent:#42506B; --accent-soft:#EEF0F4;
+  --danger:#AE4438;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17181A; --panel:#1E2023; --line:#2C2E31;
+    --ink:#EDEBE6; --text-dim:#9C998F; --muted:#6C6A62;
+    --accent:#8791A8; --accent-soft:#262A31;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17181A; --panel:#1E2023; --line:#2C2E31;
+  --ink:#EDEBE6; --text-dim:#9C998F; --muted:#6C6A62;
+  --accent:#8791A8; --accent-soft:#262A31;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px); height:100%;}
+body{
+  margin:0; height:100%; background:var(--bg); color:var(--ink);
+  font-family:'IBM Plex Sans',sans-serif; font-size:14.5px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.app{display:flex; min-height:100%;}
+nav.side{
+  width:188px; flex-shrink:0; background:var(--bg); border-right:1px solid var(--line);
+  padding:28px 12px; display:flex; flex-direction:column; gap:2px;
+  position:sticky; top:0; height:100vh; height:100dvh;
+}
+nav.side .brand{font-weight:600; font-size:15px; padding:2px 10px 24px; letter-spacing:.01em;}
+.navbtn{
+  padding:9px 12px; border-radius:6px; cursor:pointer;
+  color:var(--text-dim); font-size:13.5px; font-weight:500; user-select:none;
+}
+.navbtn:hover{color:var(--ink);}
+.navbtn.active{background:var(--accent-soft); color:var(--ink);}
+main{flex:1; padding:36px 40px 64px; max-width:760px; overflow-x:hidden;}
+.topline{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:10px;}
+.topline h1{font-size:19px; margin:0; font-weight:600;}
+.sub{color:var(--text-dim); font-size:13px; margin-bottom:28px;}
+.btn{
+  background:var(--ink); color:var(--bg); border:none; padding:8px 14px; border-radius:6px;
+  font-size:13px; font-weight:500; cursor:pointer; font-family:inherit;
+}
+.btn.ghost{background:transparent; color:var(--text-dim); border:1px solid var(--line);}
+.btn.small{padding:5px 10px; font-size:12.5px;}
+.statbar{display:flex; border:1px solid var(--line); border-radius:8px; margin-bottom:34px; overflow:hidden;}
+.statbar .stat{flex:1; padding:14px 18px; border-right:1px solid var(--line);}
+.statbar .stat:last-child{border-right:none;}
+.stat .num{font-size:22px; font-weight:600; line-height:1;}
+.stat .num.warn{color:var(--danger);}
+.stat .lbl{color:var(--text-dim); font-size:12px; margin-top:5px;}
+.section-title{font-size:12px; letter-spacing:.02em; color:var(--muted); margin:0 0 12px; font-weight:600;}
+.block{margin-bottom:34px;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:8px;}
+.goal-item{padding:16px 0; border-bottom:1px solid var(--line);}
+.goal-item:first-child{padding-top:0;}
+.goal-item:last-child{border-bottom:none;}
+.goal-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+.goal-head .name{font-size:14.5px; font-weight:500;}
+.goal-head .pct{font-size:12.5px; color:var(--text-dim); flex-shrink:0;}
+.goal-meta{color:var(--muted); font-size:12px; margin-top:2px;}
+.progress-track{height:4px; background:var(--accent-soft); border-radius:3px; overflow:hidden; margin-top:9px;}
+.progress-fill{height:100%; background:var(--accent); border-radius:3px;}
+.milestones{margin-top:12px; display:flex; flex-direction:column; gap:7px;}
+.mrow{display:flex; align-items:center; gap:9px; font-size:13.5px;}
+.mrow input[type=checkbox]{accent-color:var(--accent); width:14px; height:14px; cursor:pointer; flex-shrink:0;}
+.mrow.done span{text-decoration:line-through; color:var(--muted);}
+.mrow .rm{margin-left:auto; color:var(--muted); cursor:pointer; font-size:11.5px; opacity:0;}
+.mrow:hover .rm{opacity:1;}
+.addline{display:flex; gap:8px; margin-top:10px;}
+.addline input{flex:1;}
+input[type=text],input[type=date],textarea,select{
+  background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px 10px;
+  color:var(--ink); font-family:inherit; font-size:13px;
+}
+textarea{width:100%; resize:vertical; min-height:64px;}
+.task-row{display:flex; align-items:center; gap:11px; padding:10px 2px; border-bottom:1px solid var(--line);}
+.task-row:last-child{border-bottom:none;}
+.task-row input[type=checkbox]{accent-color:var(--accent); width:15px; height:15px; cursor:pointer; flex-shrink:0;}
+.task-row.done .ttitle{text-decoration:line-through; color:var(--muted);}
+.pri-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--muted);}
+.pri-dot.High{background:var(--danger);}
+.pri-dot.Medium{background:var(--accent);}
+.ttitle{font-size:13.5px; flex:1; min-width:100px;}
+.tmeta{display:flex; gap:12px; align-items:center; flex-shrink:0;}
+.tgoal{font-size:12px; color:var(--text-dim);}
+.tdue{font-size:12px; color:var(--text-dim); white-space:nowrap;}
+.tdue.over{color:var(--danger); font-weight:500;}
+.new-form{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:0 0 22px; padding:14px; border:1px solid var(--line); border-radius:8px;}
+.new-form input,.new-form select{flex:1; min-width:110px;}
+.empty{color:var(--muted); font-size:13px; padding:4px 0;}
+.note-item{padding:16px 0; border-bottom:1px solid var(--line);}
+.note-item:last-child{border-bottom:none;}
+.note-item h3{margin:0 0 5px; font-size:14px; font-weight:500;}
+.note-body{font-size:13px; color:var(--text-dim); white-space:pre-wrap;}
+.note-foot{display:flex; justify-content:space-between; margin-top:9px; align-items:center; font-size:12px; color:var(--muted);}
+.cal-day{display:flex; gap:16px; padding:12px 0; border-bottom:1px solid var(--line);}
+.cal-day:last-child{border-bottom:none;}
+.cal-date{width:70px; flex-shrink:0; font-size:12px; color:var(--text-dim); padding-top:1px;}
+.cal-date b{display:block; font-size:17px; color:var(--ink); font-weight:600;}
+.cal-items{flex:1; display:flex; flex-direction:column; gap:5px;}
+.cal-item{font-size:13px; color:var(--ink);}
+.cal-item .tag{color:var(--muted); margin-right:6px;}
+.icon-x{cursor:pointer; color:var(--muted); font-size:13px;}
+.icon-x:hover{color:var(--danger);}
+.close-btn{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;line-height:1;padding:2px 4px;}
+.filters{display:flex; gap:6px; margin-bottom:18px;}
+@media(max-width:720px){
+  .app{flex-direction:column;}
+  nav.side{width:100%; height:auto; position:static; flex-direction:row; overflow-x:auto; padding:12px; border-right:none; border-bottom:1px solid var(--line); gap:6px;}
+  nav.side .brand{display:none;}
+  main{padding:22px 18px 48px;}
+  .statbar{flex-wrap:wrap;}
+  .statbar .stat{flex:1 1 45%; border-bottom:1px solid var(--line);}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side">
+    <div class="brand">Waypoint</div>
+    <div class="navbtn active" data-tab="dash">Focus</div>
+    <div class="navbtn" data-tab="goals">Goals</div>
+    <div class="navbtn" data-tab="tasks">Tasks</div>
+    <div class="navbtn" data-tab="cal">Schedule</div>
+    <div class="navbtn" data-tab="notes">Notes</div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+const DB_KEY='waypoint_data_v1';
+let db = load();
+function load(){
+  try{ const raw = localStorage.getItem(DB_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return {goals:[],tasks:[],notes:[]};
+}
+function save(){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){} }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmt(d){ if(!d) return '—'; return new Date(d+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+function daysUntil(d){ if(!d) return null; return Math.round((new Date(d+'T00:00:00')-new Date(todayStr()+'T00:00:00'))/86400000); }
+let activeTab='dash';
+const nav = document.querySelectorAll('.navbtn');
+nav.forEach(b=>b.addEventListener('click',()=>{activeTab=b.dataset.tab; render();}));
+function goalProgress(g){ if(!g.milestones.length) return 0; return Math.round(100*g.milestones.filter(m=>m.done).length/g.milestones.length); }
+function esc(s){ return (s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render(){
+  nav.forEach(b=>b.classList.toggle('active', b.dataset.tab===activeTab));
+  document.getElementById('main').innerHTML =
+    ({dash:renderDash, goals:renderGoals, tasks:renderTasks, cal:renderCal, notes:renderNotes})[activeTab]();
+  wire();
+}
+
+function renderDash(){
+  const openTasks = db.tasks.filter(t=>!t.done).length;
+  const dueToday = db.tasks.filter(t=>!t.done && t.due===todayStr()).length;
+  const overdue = db.tasks.filter(t=>!t.done && t.due && t.due<todayStr()).length;
+  const nextUp = [...db.tasks].filter(t=>!t.done && t.due).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,5);
+  return `
+  <div class="topline"><h1>Focus</h1></div>
+  <div class="sub">${new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}</div>
+  <div class="statbar">
+    <div class="stat"><div class="num">${openTasks}</div><div class="lbl">Open tasks</div></div>
+    <div class="stat"><div class="num">${dueToday}</div><div class="lbl">Due today</div></div>
+    <div class="stat"><div class="num ${overdue?'warn':''}">${overdue}</div><div class="lbl">Overdue</div></div>
+    <div class="stat"><div class="num">${db.goals.length}</div><div class="lbl">Goals in motion</div></div>
+  </div>
+  <div class="block">
+    <div class="section-title">Next up</div>
+    <div class="card" style="padding:4px 16px;">
+      ${nextUp.length? nextUp.map(t=>renderTaskRow(t,true)).join('') : `<div class="empty">Nothing scheduled — add a due date to a task to see it here.</div>`}
+    </div>
+  </div>
+  <div class="block">
+    <div class="section-title">Goal progress</div>
+    <div class="card" style="padding:4px 16px;">
+      ${db.goals.length? db.goals.map(g=>`
+        <div class="goal-item">
+          <div class="goal-head"><span class="name">${esc(g.title)}</span><span class="pct">${goalProgress(g)}%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:${goalProgress(g)}%"></div></div>
+        </div>`).join('') : `<div class="empty">No goals yet — start one in the Goals tab.</div>`}
+    </div>
+  </div>`;
+}
+
+function renderGoals(){
+  return `
+  <div class="topline"><h1>Goals</h1><button class="btn" id="newGoalBtn">New goal</button></div>
+  <div class="sub">Break each goal into checkpoints and track it to done.</div>
+  <div id="newGoalForm" class="new-form" style="display:none;">
+    <input type="text" id="gTitle" placeholder="Goal title">
+    <input type="date" id="gDate">
+    <select id="gCat"><option value="">No category</option><option>Career</option><option>Health</option><option>Learning</option><option>Finance</option><option>Personal</option></select>
+    <button class="btn small" id="gSave">Add</button>
+    <button class="btn ghost small" id="gCancel">Cancel</button>
+  </div>
+  ${db.goals.length? db.goals.map(g=>`
+    <div class="card block" style="padding:18px 20px;" data-id="${g.id}">
+      <div class="goal-head">
+        <div>
+          <div class="name" style="font-size:15px;">${esc(g.title)}</div>
+          <div class="goal-meta">${g.category? esc(g.category)+' · ':''}Target ${fmt(g.target)}</div>
+        </div>
+        <button class="close-btn del-goal" data-id="${g.id}">✕</button>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${goalProgress(g)}%"></div></div>
+      <div class="milestones">
+        ${g.milestones.map(m=>`
+          <div class="mrow ${m.done?'done':''}">
+            <input type="checkbox" ${m.done?'checked':''} class="ms-toggle" data-gid="${g.id}" data-mid="${m.id}">
+            <span>${esc(m.text)}</span>
+            <span class="rm ms-del" data-gid="${g.id}" data-mid="${m.id}">remove</span>
+          </div>`).join('') || '<div class="empty">No checkpoints yet.</div>'}
+      </div>
+      <div class="addline">
+        <input type="text" placeholder="Add a checkpoint" class="ms-input" data-gid="${g.id}">
+        <button class="btn small ms-add" data-gid="${g.id}">Add</button>
+      </div>
+    </div>`).join('') : `<div class="empty">No goals yet — start one above.</div>`}
+  `;
+}
+
+function renderTaskRow(t, compact){
+  const g = db.goals.find(x=>x.id===t.goalId);
+  const dleft = t.due? daysUntil(t.due): null;
+  const overdue = dleft!==null && dleft<0 && !t.done;
+  return `<div class="task-row ${t.done?'done':''}" data-id="${t.id}">
+    <input type="checkbox" ${t.done?'checked':''} class="task-toggle" data-id="${t.id}">
+    <span class="pri-dot ${t.priority}"></span>
+    <div class="ttitle">${esc(t.title)}</div>
+    <div class="tmeta">
+      ${g? `<span class="tgoal">${esc(g.title)}</span>`:''}
+      ${t.due? `<span class="tdue ${overdue?'over':''}">${fmt(t.due)}</span>`:''}
+      ${!compact? `<span class="icon-x task-del" data-id="${t.id}">✕</span>`:''}
+    </div>
+  </div>`;
+}
+
+function renderTasks(){
+  const filter = window._taskFilter || 'open';
+  let list = db.tasks;
+  if(filter==='open') list = list.filter(t=>!t.done);
+  if(filter==='done') list = list.filter(t=>t.done);
+  list = [...list].sort((a,b)=> (a.due||'9999').localeCompare(b.due||'9999'));
+  const goalOpts = db.goals.map(g=>`<option value="${g.id}">${esc(g.title)}</option>`).join('');
+  return `
+  <div class="topline"><h1>Tasks</h1><button class="btn" id="newTaskBtn">New task</button></div>
+  <div class="sub">Everything you need to get done.</div>
+  <div id="newTaskForm" class="new-form" style="display:none;">
+    <input type="text" id="tTitle" placeholder="Task title">
+    <select id="tGoal"><option value="">No goal</option>${goalOpts}</select>
+    <input type="date" id="tDue">
+    <select id="tPri"><option>Normal</option><option>Medium</option><option>High</option></select>
+    <button class="btn small" id="tSave">Add</button>
+    <button class="btn ghost small" id="tCancel">Cancel</button>
+  </div>
+  <div class="filters">
+    <button class="btn small ${filter==='open'?'':'ghost'}" data-filter="open">Open</button>
+    <button class="btn small ${filter==='all'?'':'ghost'}" data-filter="all">All</button>
+    <button class="btn small ${filter==='done'?'':'ghost'}" data-filter="done">Done</button>
+  </div>
+  <div class="card" style="padding:4px 16px;">${list.length? list.map(t=>renderTaskRow(t,false)).join('') : `<div class="empty">Nothing here.</div>`}</div>`;
+}
+
+function renderCal(){
+  const items = [];
+  db.tasks.filter(t=>t.due && !t.done).forEach(t=>items.push({date:t.due, label:t.title, type:'Task'}));
+  db.goals.filter(g=>g.target).forEach(g=>items.push({date:g.target, label:g.title, type:'Goal'}));
+  items.sort((a,b)=>a.date.localeCompare(b.date));
+  const byDate = {};
+  items.forEach(i=>{ (byDate[i.date] ||= []).push(i); });
+  const dates = Object.keys(byDate);
+  return `
+  <div class="topline"><h1>Schedule</h1></div>
+  <div class="sub">Upcoming dates from your goals and tasks.</div>
+  <div class="card" style="padding:4px 16px;">
+  ${dates.length? dates.map(d=>{
+    const dt = new Date(d+'T00:00:00');
+    return `<div class="cal-day"><div class="cal-date"><b>${dt.getDate()}</b>${dt.toLocaleDateString(undefined,{month:'short'})}</div>
+    <div class="cal-items">${byDate[d].map(i=>`<div class="cal-item"><span class="tag">${i.type}</span>${esc(i.label)}</div>`).join('')}</div></div>`;
+  }).join('') : `<div class="empty">No dated tasks or goal deadlines yet.</div>`}
+  </div>`;
+}
+
+function renderNotes(){
+  const goalOpts = db.goals.map(g=>`<option value="${g.id}">${esc(g.title)}</option>`).join('');
+  return `
+  <div class="topline"><h1>Notes</h1><button class="btn" id="newNoteBtn">New note</button></div>
+  <div class="sub">Jot down thoughts, tied to a goal or standalone.</div>
+  <div id="newNoteForm" class="new-form" style="display:${window._noteFormOpen?'flex':'none'};flex-direction:column;align-items:stretch;">
+    <input type="text" id="nTitle" placeholder="Note title">
+    <select id="nGoal" style="max-width:220px;"><option value="">Not linked</option>${goalOpts}</select>
+    <textarea id="nBody" placeholder="Write your note…"></textarea>
+    <div style="display:flex;gap:8px;"><button class="btn small" id="nSave">Save</button><button class="btn ghost small" id="nCancel">Cancel</button></div>
+  </div>
+  <div class="card" style="padding:4px 16px;">
+  ${db.notes.length? [...db.notes].reverse().map(n=>{
+    const g = db.goals.find(x=>x.id===n.goalId);
+    return `<div class="note-item"><h3>${esc(n.title||'Untitled')}</h3><div class="note-body">${esc(n.body)}</div>
+    <div class="note-foot"><span>${fmt(n.date)}${g? ' · '+esc(g.title):''}</span><span class="icon-x note-del" data-id="${n.id}">✕</span></div></div>`;
+  }).join('') : `<div class="empty">No notes yet.</div>`}
+  </div>`;
+}
+
+function wire(){
+  const ngBtn = document.getElementById('newGoalBtn');
+  if(ngBtn) ngBtn.onclick = ()=>{ document.getElementById('newGoalForm').style.display='flex'; };
+  const gCancel = document.getElementById('gCancel');
+  if(gCancel) gCancel.onclick = ()=>{ document.getElementById('newGoalForm').style.display='none'; };
+  const gSave = document.getElementById('gSave');
+  if(gSave) gSave.onclick = ()=>{
+    const title = document.getElementById('gTitle').value.trim();
+    if(!title) return;
+    db.goals.push({id:uid(), title, target:document.getElementById('gDate').value, category:document.getElementById('gCat').value, milestones:[]});
+    save(); render();
+  };
+  document.querySelectorAll('.del-goal').forEach(el=>el.onclick=()=>{
+    db.goals = db.goals.filter(g=>g.id!==el.dataset.id);
+    db.tasks.forEach(t=>{ if(t.goalId===el.dataset.id) t.goalId=null; });
+    save(); render();
+  });
+  document.querySelectorAll('.ms-toggle').forEach(el=>el.onchange=()=>{
+    const g = db.goals.find(x=>x.id===el.dataset.gid);
+    g.milestones.find(x=>x.id===el.dataset.mid).done = el.checked; save(); render();
+  });
+  document.querySelectorAll('.ms-del').forEach(el=>el.onclick=()=>{
+    const g = db.goals.find(x=>x.id===el.dataset.gid);
+    g.milestones = g.milestones.filter(m=>m.id!==el.dataset.mid); save(); render();
+  });
+  document.querySelectorAll('.ms-add').forEach(el=>el.onclick=()=>{
+    const input = document.querySelector(`.ms-input[data-gid="${el.dataset.gid}"]`);
+    const v = input.value.trim(); if(!v) return;
+    document.querySelector ? null : null;
+    const g = db.goals.find(x=>x.id===el.dataset.gid);
+    g.milestones.push({id:uid(), text:v, done:false}); save(); render();
+  });
+  document.querySelectorAll('.ms-input').forEach(el=>el.onkeydown=(e)=>{
+    if(e.key==='Enter') document.querySelector(`.ms-add[data-gid="${el.dataset.gid}"]`).click();
+  });
+  const ntBtn = document.getElementById('newTaskBtn');
+  if(ntBtn) ntBtn.onclick = ()=>{ document.getElementById('newTaskForm').style.display='flex'; };
+  const tCancel = document.getElementById('tCancel');
+  if(tCancel) tCancel.onclick = ()=>{ document.getElementById('newTaskForm').style.display='none'; };
+  const tSave = document.getElementById('tSave');
+  if(tSave) tSave.onclick = ()=>{
+    const title = document.getElementById('tTitle').value.trim();
+    if(!title) return;
+    db.tasks.push({id:uid(), title, goalId:document.getElementById('tGoal').value||null, due:document.getElementById('tDue').value, priority:document.getElementById('tPri').value, done:false});
+    save(); render();
+  };
+  document.querySelectorAll('.task-toggle').forEach(el=>el.onchange=()=>{
+    db.tasks.find(t=>t.id===el.dataset.id).done = el.checked; save(); render();
+  });
+  document.querySelectorAll('.task-del').forEach(el=>el.onclick=()=>{
+    db.tasks = db.tasks.filter(t=>t.id!==el.dataset.id); save(); render();
+  });
+  document.querySelectorAll('[data-filter]').forEach(el=>el.onclick=()=>{
+    window._taskFilter = el.dataset.filter; render();
+  });
+  const nnBtn = document.getElementById('newNoteBtn');
+  if(nnBtn) nnBtn.onclick = ()=>{ window._noteFormOpen=true; render(); };
+  const nCancel = document.getElementById('nCancel');
+  if(nCancel) nCancel.onclick = ()=>{ window._noteFormOpen=false; render(); };
+  const nSave = document.getElementById('nSave');
+  if(nSave) nSave.onclick = ()=>{
+    const body = document.getElementById('nBody').value.trim();
+    if(!body) return;
+    db.notes.push({id:uid(), title:document.getElementById('nTitle').value.trim(), body, goalId:document.getElementById('nGoal').value||null, date:todayStr()});
+    window._noteFormOpen=false; save(); render();
+  };
+  document.querySelectorAll('.note-del').forEach(el=>el.onclick=()=>{
+    db.notes = db.notes.filter(n=>n.id!==el.dataset.id); save(); render();
+  });
+}
+
+render();
+</script>
+</body>
+</html>
